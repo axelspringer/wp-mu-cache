@@ -20,9 +20,9 @@ function super_dupi_cache() {
   $isMobile   = isset($_SERVER['HTTP_X_UA_DEVICE']) && $_SERVER['HTTP_X_UA_DEVICE'] == 'mobile';
 
   // temp
-  $path   = DATA_DIR . strtok($_SERVER['REQUEST_URI'],'?');
+  $path   = DATA_DIR . DIRECTORY_SEPARATOR . ASSE_SUPER_DUPI_CACHEDIR . DIRECTORY_SEPARATOR . strtok($_SERVER['REQUEST_URI'],'?');
   $name   = $isMobile ? 'mobile.html' : 'desktop.html';
-  $file   = $path . DIRECTORY_SEPARATOR . $name;
+  $file   = $path  . DIRECTORY_SEPARATOR . $name;
 
   // create path
   if (!file_exists($file)) {
