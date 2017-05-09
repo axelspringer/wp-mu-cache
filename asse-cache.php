@@ -6,12 +6,24 @@
  * Writes .html files for every request url
  */
 
-ob_start();
+// boostrap
+super_dupi_cache_bootstrap();
 
-add_action('shutdown', function() {
+// super dupi cache stuff
+function super_dupi_cache() {
+
+  // very simple conditioning
+  if (!(is_home() || is_single())) {
+    return;
+  }
+
+  // check mobile client, argh *:-)
+  $isMobile   = isset($_SERVER['HTTP_X_UA_DEVICE']) && $_SERVER['HTTP_X_UA_DEVICE'] == 'mobile';
+
   // temp
   $path   = sys_get_temp_dir() . $_SERVER['REQUEST_URI'];
-  $file   = $path . DIRECTORY_SEPARATOR . 'index.html';
+  $name   = $isMobile ? 'mobile.html' : 'desktop.html';
+  $file   = $path . DIRECTORY_SEPARATOR . $name;
 
   // create path
   if (!file_exists($file)) {
@@ -22,7 +34,7 @@ add_action('shutdown', function() {
   $handle = fopen($file, "w");
 
   // output construction
-  $output = '<!-- WP SuperDupi Cache -->';
+  $output = "<!-- WP SuperDupi Cache -->\r\n";
 
   // iterate
   $levels = ob_get_level();
@@ -41,4 +53,18 @@ add_action('shutdown', function() {
 
   // echo output
   echo $output;
-}, 0);
+}
+
+// boostrap the super dupi cache
+function super_dupi_cache_bootstrap() {
+  // if only in the frontend
+  if (getenv('WP_LAYER') === 'frontend') {
+    // start buffer
+    ob_start();
+
+    // add action
+    add_action('shutdown', 'super_dupi_cache', 0);
+  }
+}
+
+
