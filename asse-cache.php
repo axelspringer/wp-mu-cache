@@ -11,7 +11,6 @@ super_dupi_cache_bootstrap();
 
 // super dupi cache stuff
 function super_dupi_cache() {
-
   // very simple conditioning
   if (!(is_home() || is_single())) {
     return;
@@ -21,7 +20,7 @@ function super_dupi_cache() {
   $isMobile   = isset($_SERVER['HTTP_X_UA_DEVICE']) && $_SERVER['HTTP_X_UA_DEVICE'] == 'mobile';
 
   // temp
-  $path   = sys_get_temp_dir() . $_SERVER['REQUEST_URI'];
+  $path   = DATA_DIR . strtok($_SERVER['REQUEST_URI'],'?');
   $name   = $isMobile ? 'mobile.html' : 'desktop.html';
   $file   = $path . DIRECTORY_SEPARATOR . $name;
 
@@ -31,10 +30,10 @@ function super_dupi_cache() {
   }
 
   // get file handle
-  $handle = fopen($file, "w");
+  $handle = fopen($file, 'w');
 
   // output construction
-  $output = "<!-- WP SuperDupi Cache -->\r\n";
+  $output = "";
 
   // iterate
   $levels = ob_get_level();
@@ -48,7 +47,7 @@ function super_dupi_cache() {
   $output = apply_filters('final_output', $output);
 
   // Apply any filters to the final output
-  fwrite($handle, $output);
+  fwrite($handle, "<!-- WP SuperDupi Cache -->\r\n" . $output);
   fclose($handle);
 
   // echo output
@@ -58,7 +57,8 @@ function super_dupi_cache() {
 // boostrap the super dupi cache
 function super_dupi_cache_bootstrap() {
   // if only in the frontend
-  if (getenv('WP_LAYER') === 'frontend') {
+  if (defined('ASSE_SUPER_DUPI_CACHEDIR') && 
+    getenv('WP_LAYER') === 'frontend') {
     // start buffer
     ob_start();
 
