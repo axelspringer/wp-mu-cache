@@ -1,4 +1,6 @@
 <?php
+defined('ABSPATH') || exit;
+getenv('WP_LAYER') || exit;
 
 /**
  * Output buffering and caching
@@ -6,65 +8,103 @@
  * Writes .html files for every request url
  */
 
-// boostrap
-super_dupi_cache_bootstrap();
+// if not on the frontend
+if (getenv('WP_LAYER') !== 'frontend') {
+  return;
+}
 
 // super dupi cache stuff
-function super_dupi_cache() {
-  // very simple conditioning
-  if (!(is_home() || is_single())) {
-    return;
-  }
+function super_dupi_cache($buffer, $args) {
+  // if there is nothing really to cache
+  if (strlen($buffer) < 255) {
+		return $buffer;
+	}
 
-  // check mobile client, argh *:-)
-  $isMobile   = isset($_SERVER['HTTP_X_UA_DEVICE']) && $_SERVER['HTTP_X_UA_DEVICE'] == 'mobile';
+  // avoid caching search, 404, or password protected
+	if (is_404() || is_search() || post_password_required()) {
+		return $buffer;
+	}
 
-  // temp
-  $path   = DATA_DIR . DIRECTORY_SEPARATOR . ASSE_SUPER_DUPI_CACHEDIR . DIRECTORY_SEPARATOR . strtok($_SERVER['REQUEST_URI'],'?');
-  $name   = $isMobile ? 'mobile.html' : 'desktop.html';
-  $file   = $path  . DIRECTORY_SEPARATOR . $name;
+  if (!defined('FS_CHMOD_DIR'))
+		define('FS_CHMOD_DIR', (fileperms(ABSPATH) & 0777 | 0755));
+	if (!defined('FS_CHMOD_FILE'))
+		define('FS_CHMOD_FILE', (fileperms(ABSPATH . 'index.php' ) & 0777 | 0644));
 
-  // create path
-  if (!file_exists($file)) {
-    mkdir($path, 0700, true);
-  }
+	include_once ABSPATH . 'wp-admin/includes/class-wp-filesystem-base.php';
+	include_once ABSPATH . 'wp-admin/includes/class-wp-filesystem-direct.php';
 
-  // get file handle
-  $handle = fopen($file, 'w');
+	$fs      = new WP_Filesystem_Direct(new StdClass());
+  $cache   = untrailingslashit(DATA_DIR) . '/cache';
 
-  // output construction
-  $output = "";
+	// cache dir
+	if (!$fs->exists($cache)) {
+		if (!$fs->mkdir($cache)) {
+			// cannot cache
+			return $buffer;
+		}
+	}
 
-  // iterate
-  $levels = ob_get_level();
+  // url path
+  $urlPath    = super_dupi_cache_url_path();
 
-  // produce output
-  for ($i = 0; $i < $levels; $i++) {
-    $output .= ob_get_clean();
-  }
+  // filters
+  $excludes = [
+    '..',
+    '.'
+  ];
 
-  // filter output
-  $output = apply_filters('final_output', $output);
+  // dirs to create
+  $dirs = array_diff(explode('/', $urlPath), $excludes);
+  $path = $cache;
 
-  // Apply any filters to the final output
-  fwrite($handle, "<!-- WP SuperDupi Cache -->\r\n" . $output);
-  fclose($handle);
+  $l = count($dirs);
+  for ($i = 0; $i < $l; $i++) {
+		if (! empty($dirs[$i]) ) {
+			$path .= DIRECTORY_SEPARATOR . $dirs[$i];
+
+			if (!$fs->exists($path)) {
+				if (!$fs->mkdir($path)) {
+					// cannot cache
+					return $buffer;
+				}
+			}
+		}
+	}
+
+  $fileName   = super_dupi_cache_mobile() ? 'mobile.html' : 'desktop.html';
+  $file       = $path  . DIRECTORY_SEPARATOR . $fileName;
+
+  // consistent timing
+  $mTime = time();
+
+  // log
+	if (preg_match('#</html>#i', $buffer)) {
+		$buffer .= "\n<!-- Super Dupi Cache - Last modified: " . gmdate('D, d M Y H:i:s', $mTime) . " GMT -->\n";
+	}
+
+	$fs->put_contents($file, $buffer, FS_CHMOD_FILE);
+	$fs->touch($file, $mTime );
 
   // echo output
-  echo $output;
+	return $buffer;
 }
 
-// boostrap the super dupi cache
-function super_dupi_cache_bootstrap() {
-  // if only in the frontend
-  if (defined('ASSE_SUPER_DUPI_CACHEDIR') && 
-    getenv('WP_LAYER') === 'frontend') {
-    // start buffer
-    ob_start();
-
-    // add action
-    add_action('shutdown', 'super_dupi_cache', 0);
-  }
+/**
+ * Get path for caching
+ *
+ */
+function super_dupi_cache_url_path() {
+  // strip query parameters
+  return trim(strtok($_SERVER['REQUEST_URI'],'?'));
 }
 
+/**
+ * Mobile
+ */
+function super_dupi_cache_mobile() {
+  // check mobile client, argh *:-)
+  return isset($_SERVER['HTTP_X_UA_DEVICE']) && $_SERVER['HTTP_X_UA_DEVICE'] == 'mobile';
+}
 
+// start buffer
+ob_start('super_dupi_cache');
