@@ -83,8 +83,20 @@ function super_dupi_cache($buffer, $args) {
 		$buffer .= "\n<!-- Super Dupi Cache - Last modified: " . gmdate('D, d M Y H:i:s', $mTime) . " GMT -->\n";
 	}
 	
+	// write buffer
 	$fs->put_contents($file, $buffer, FS_CHMOD_FILE);
-	$fs->touch($file, $mTime );
+	$fs->touch($file, $mTime);
+
+	// write .gz file, to decrease load on nginx
+	if ($gz = gzopen($file . '.gz', 'wb9')) {
+		gzwrite($gz, $buffer);
+		gzclose($gz);
+	}
+
+	// write .br files, to decrease load on nginx
+	if (function_exists('brotli_compress')) {
+		$fs->put_contents($file . '.br', brotli_compress($buffer), FS_CHMOD_FILE);
+	}
 	
 	// echo output
 	return $buffer;
