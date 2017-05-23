@@ -21,7 +21,7 @@ function super_dupi_cache($buffer, $args) {
 	}
 	
 	// avoid caching search, 404, or password protected
-	if (is_404() || is_search() || post_password_required() || is_feed() || is_set($_GET['json'])) {
+	if (is_404() || is_search() || post_password_required() || is_feed() || is_set($_POST['json'])) {
 		return $buffer;
 	}
 	
