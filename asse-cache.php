@@ -4,7 +4,7 @@ getenv('WP_LAYER') || exit;
 
 // plugin version
 if (!defined('ASSE_CACHE_VERSION')) {
-  define('ASSE_CACHE_VERSION', '0.4.4');
+  define('ASSE_CACHE_VERSION', '0.4.5');
 }
 
 /**
@@ -28,11 +28,13 @@ function super_dupi_cache($buffer, $args) {
 	// avoid to interfere with api's
 	if (defined( 'DOING_AJAX' ) && DOING_AJAX) {
     	return $buffer;
-  	} elseif(defined('XMLRPC_REQUEST') && XMLRPC_REQUEST) {
+  	} elseif (defined('XMLRPC_REQUEST') && XMLRPC_REQUEST) {
     	return $buffer;
-  	} elseif(defined('REST_REQUEST') && REST_REQUEST) {
+  	} elseif (defined('REST_REQUEST') && REST_REQUEST) {
     	return $buffer;
-  	}
+  	} elseif ( isset($_GET['json']) ) {
+		return $buffer;
+	}
 	
 	// avoid caching search, 404, or password protected
 	if (is_404() || is_search() || post_password_required() || is_feed() || is_admin()) {
