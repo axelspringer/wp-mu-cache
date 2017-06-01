@@ -10,7 +10,6 @@ if ( ! defined('ASSE_CACHE_VERSION') ) {
 class Asse_Cache {
 
   public $defaults = [
-    'nginx_http_code'   => true,
     'redirect'          => true
   ];
 
@@ -126,7 +125,7 @@ class Asse_Cache {
     }
 
     if ( true === $defaults['redirect'] ) {
-      header( 'Location: ' . $urlPath );
+      header( 'Location: ' . $urlPath, true, 303 );
       exit;
     }
 
