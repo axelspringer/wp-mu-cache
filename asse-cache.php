@@ -10,7 +10,8 @@ if ( ! defined('ASSE_CACHE_VERSION') ) {
 class Asse_Cache {
 
   public $defaults = [
-    'redirect'          => true
+    'redirect'          => true,
+    'normalize'         => false
   ];
 
   public function __construct() {
@@ -29,6 +30,7 @@ class Asse_Cache {
 
   public function super_dupi_cache( $buffer, $args ) {
     $defaults = $this->defaults;
+    $defaults = apply_filters( 'super_dupi_cache_defaults', $defaults );
 
     // if there is nothing really to cache
     if ( strlen($buffer) < 255 ) {
@@ -139,7 +141,10 @@ class Asse_Cache {
   }
 
   public function super_dupi_cache_url_path() {
-	  // strip query parameters
+    if ( false === $defaults['normalize'] ) {
+      return $_SERVER['REQUEST_URI'];
+    }
+
 	  return trim( strtok( $_SERVER['REQUEST_URI'], '?' ) );
   }
 
