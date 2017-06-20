@@ -4,20 +4,20 @@ getenv( 'WP_LAYER' ) || exit;
 
 // plugin version
 if ( ! defined('ASSE_CACHE_VERSION') ) {
-  define( 'ASSE_CACHE_VERSION', '0.4.6' );
+  define( 'ASSE_CACHE_VERSION', '0.4.9' );
 }
 
 class Asse_Cache {
 
   public $defaults = [
     'redirect'          => true,
-    'normalize'         => false
+    'normalize'         => false,
   ];
 
   public function __construct() {
     // if not on the frontend
-    if (getenv('WP_LAYER') !== 'frontend') {
-	    return;
+    if ( 'frontend' !== getenv( 'WP_LAYER' ) ) {
+      return;
     }
 
     $this->start_ob();
@@ -29,8 +29,7 @@ class Asse_Cache {
   }
 
   public function super_dupi_cache( $buffer, $args ) {
-    $defaults = $this->defaults;
-    $defaults = apply_filters( 'super_dupi_cache_defaults', $defaults );
+    $this->defaults = apply_filters( 'super_dupi_cache_defaults', $this->defaults );
 
     // if there is nothing really to cache
     if ( strlen($buffer) < 255 ) {
@@ -38,31 +37,34 @@ class Asse_Cache {
     }
 
     // avoid to interfere with api's
-    if (defined( 'DOING_AJAX' ) && DOING_AJAX) {
+    if ( defined( 'DOING_AJAX' ) && DOING_AJAX ) {
       return $buffer;
     } elseif ( defined('XMLRPC_REQUEST' ) && XMLRPC_REQUEST) {
       return $buffer;
     } elseif ( defined('REST_REQUEST' ) && REST_REQUEST) {
       return $buffer;
-    } elseif ( isset($_GET['json']) ) {
+    } elseif ( isset($_GET['json'] ) ) {
       return $buffer;
     }
 
     // avoid caching search, 404, or password protected
-    if (is_404() || is_search() || post_password_required() || is_feed() || is_admin()) {
+    if ( is_404() || is_search() || post_password_required() || is_feed() || is_admin() ) {
       return $buffer;
     }
 
-    if (!defined('FS_CHMOD_DIR'))
-      define('FS_CHMOD_DIR', (fileperms(ABSPATH) & 0777 | 0755));
-    if (!defined('FS_CHMOD_FILE'))
-      define('FS_CHMOD_FILE', (fileperms(ABSPATH . 'index.php' ) & 0777 | 0644));
+    if ( ! defined( 'FS_CHMOD_DIR' ) ) {
+      define( 'FS_CHMOD_DIR', ( fileperms( ABSPATH ) & 0777 | 0755 ) );
+    }
+
+    if ( ! defined( 'FS_CHMOD_FILE' ) ) {
+      define( 'FS_CHMOD_FILE', ( fileperms( ABSPATH . 'index.php' ) & 0777 | 0644 ) );
+    }
 
     include_once ABSPATH . 'wp-admin/includes/class-wp-filesystem-base.php';
     include_once ABSPATH . 'wp-admin/includes/class-wp-filesystem-direct.php';
 
-    $fs      = new WP_Filesystem_Direct(new StdClass());
-    $cache   = untrailingslashit(DATA_DIR) . '/cache';
+    $fs      = new WP_Filesystem_Direct( new StdClass() );
+    $cache   = untrailingslashit( DATA_DIR ) . '/cache';
 
     // cache dir
     if (!$fs->exists($cache)) {
@@ -112,21 +114,21 @@ class Asse_Cache {
     }
 
     // write buffer
-    $fs->put_contents($file, $buffer, FS_CHMOD_FILE);
-    $fs->touch($file, $mTime);
+    $fs->put_contents( $file, $buffer, FS_CHMOD_FILE );
+    $fs->touch( $file, $mTime );
 
     // write .gz file, to decrease load on nginx
-    if ($gz = gzopen($file . '.gz', 'wb9')) {
-      gzwrite($gz, $buffer);
-      gzclose($gz);
+    if ( $gz = gzopen( $file . '.gz', 'wb9' ) ) {
+      gzwrite( $gz, $buffer );
+      gzclose( $gz );
     }
 
     // write .br files, to decrease load on nginx
-    if (function_exists('brotli_compress')) {
-      $fs->put_contents($file . '.br', brotli_compress($buffer), FS_CHMOD_FILE);
+    if ( function_exists( 'brotli_compress' ) ) {
+      $fs->put_contents( $file . '.br', brotli_compress( $buffer ), FS_CHMOD_FILE );
     }
 
-    if ( true === $defaults['redirect'] ) {
+    if ( true === $this->defaults['redirect'] ) {
       header( 'Location: ' . $urlPath, true, 303 );
       exit;
     }
@@ -141,7 +143,7 @@ class Asse_Cache {
   }
 
   public function super_dupi_cache_url_path() {
-    if ( false === $defaults['normalize'] ) {
+    if ( false === $this->defaults['normalize'] ) {
       return $_SERVER['REQUEST_URI'];
     }
 
