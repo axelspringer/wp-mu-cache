@@ -4,7 +4,7 @@ getenv( 'WP_LAYER' ) || exit;
 
 // plugin version
 if ( ! defined('ASSE_CACHE_VERSION') ) {
-  define( 'ASSE_CACHE_VERSION', '0.4.9' );
+  define( 'ASSE_CACHE_VERSION', '0.5.0' );
 }
 
 class Asse_Cache {
