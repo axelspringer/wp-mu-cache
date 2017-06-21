@@ -36,6 +36,12 @@ class Asse_Cache {
       return $buffer;
     }
 
+    // ignore metrics
+    if ( isset( $_SERVER['REQUEST_URI'] ) &&
+      false !== strpos( $_SERVER['REQUEST_URI'], '/metrics' ) ) {
+      return $buffer;
+    }
+
     // avoid to interfere with api's
     if ( defined( 'DOING_AJAX' ) && DOING_AJAX ) {
       return $buffer;
