@@ -4,7 +4,7 @@ getenv( 'WP_LAYER' ) || exit;
 
 // plugin version
 if ( ! defined('ASSE_CACHE_VERSION') ) {
-  define( 'ASSE_CACHE_VERSION', '0.5.0' );
+  define( 'ASSE_CACHE_VERSION', '0.5.1' );
 }
 
 class Asse_Cache {
@@ -12,6 +12,13 @@ class Asse_Cache {
   public $defaults = [
     'redirect'          => true,
     'normalize'         => false,
+    'single'            => true,
+    'category'          => true,
+    'page'              => true,
+    'tag'               => true,
+    'author'            => true,
+    'frontend'          => true,
+    'backend'           => false
   ];
 
   public function __construct() {
@@ -31,8 +38,25 @@ class Asse_Cache {
   public function super_dupi_cache( $buffer, $args ) {
     $this->defaults = apply_filters( 'super_dupi_cache_defaults', $this->defaults );
 
+    if ( getenv( 'WP_LAYER' ) === 'frontend' && 
+      ! $this->defaults['frontend'] ) {
+      return $buffer;
+    }
+
+    if ( getenv( 'WP_LAYER' ) === 'backend' && 
+      ! $this->defaults['backend'] ) {
+      return $buffer;
+    }
+
     // if there is nothing really to cache
     if ( strlen($buffer) < 255 ) {
+      return $buffer;
+    }
+
+    if ( ( ! $this->defaults['single'] && is_single() ) ||
+     ( ! $this->defaults['page'] && is_page() ) ||
+     ( ! $this->defaults['author'] && is_author() ) ||
+     ( ! $this->defaults['category'] && is_category() )  ) {
       return $buffer;
     }
 
