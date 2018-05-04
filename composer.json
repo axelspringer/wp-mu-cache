@@ -1,5 +1,5 @@
 {
-    "name": "muplugin/asse-cache",
+    "name": "axelspringer/wp-mu-cache",
     "type": "wordpress-muplugin",
     "description": "Caching",
     "keywords": [
@@ -10,11 +10,15 @@
         {
             "name": "Sebastian Döll",
             "homepage": "http://www.axelspringer.de"
+        },
+        {
+            "name": "Mathias Witt",
+            "homepage": "http://www.axelspringer.de"
         }
     ],
-    "homepage": "https://as-stash.axelspringer.de/projects/WPMUP/repos/asse-cache",
-    "license": "proprietary",
+    "homepage": "https://github.com/axelspringer/wp-mu-cache",
+    "license": "Apache-2.0",
     "extra": {
-        "installer-name": "asse-cache"
+        "installer-name": "wp-mu-cache"
     }
 }
